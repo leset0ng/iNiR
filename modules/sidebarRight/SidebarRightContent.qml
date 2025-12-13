@@ -306,7 +306,7 @@ Item {
                     
                     GlobalStates.sidebarRightOpen = false;
                     Qt.callLater(() => {
-                        Quickshell.execDetached(["qs", "-n", "-p", root.settingsQmlPath]);
+                        Quickshell.execDetached(["qs", "-c", "ii", "ipc", "call", "settings", "open"]);
                     })
                 }
                 StyledToolTip {

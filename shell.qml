@@ -71,7 +71,7 @@ ShellRoot {
         }
     }
 
-    // IPC for settings
+    // IPC for settings - use unique config IDs to prevent multiple instances
     IpcHandler {
         target: "settings"
         function open(): void {
@@ -85,11 +85,13 @@ ShellRoot {
     }
     Process {
         id: settingsProcess
-        command: ["qs", "-n", "-p", Quickshell.shellPath("settings.qml")]
+        // -c ii-settings ensures only one instance can run
+        command: ["qs", "-c", "ii-settings", "-p", Quickshell.shellPath("settings.qml")]
     }
     Process {
         id: waffleSettingsProcess
-        command: ["qs", "-n", "-p", Quickshell.shellPath("waffleSettings.qml")]
+        // -c ii-waffle-settings ensures only one instance can run
+        command: ["qs", "-c", "ii-waffle-settings", "-p", Quickshell.shellPath("waffleSettings.qml")]
     }
 
     // === Panel Loaders ===
