@@ -85,12 +85,15 @@ Rectangle {
         property real modelValue: 0
         configuration: StyledSlider.Configuration.M
         stopIndicatorValues: []
+        scrollable: true
 
-        Binding {
-            target: quickSlider
-            property: "value"
-            value: quickSlider.modelValue
-            when: !quickSlider.pressed && !quickSlider._userInteracting
+        // Sync from model only when not interacting, with threshold to avoid micro-jumps
+        onModelValueChanged: {
+            if (!pressed && !_userInteracting) {
+                if (Math.abs(value - modelValue) > 0.005) {
+                    value = modelValue
+                }
+            }
         }
         
         MaterialSymbol {

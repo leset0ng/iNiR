@@ -65,14 +65,20 @@ Slider {
 
     Timer {
         id: _userInteractingReset
-        interval: 180
+        interval: 250
         repeat: false
         onTriggered: root._userInteracting = false
     }
 
-    Behavior on value { // This makes the adjusted value (like volume) shift smoothly
-        SmoothedAnimation {
-            velocity: Appearance.animation.elementMoveFast.velocity
+    // No animation on value - instant response to user input
+    // External changes (volume changed by other app) also instant, which is fine
+
+    onPressedChanged: {
+        if (pressed) {
+            root._userInteracting = true
+        } else {
+            _userInteractingReset.restart()
+            root.moved()
         }
     }
 
