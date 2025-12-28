@@ -257,19 +257,6 @@ Singleton {
     // - api_format: The API format of the model. Can be "openai" or "gemini". Default is "openai".
     // - extraParams: Extra parameters to be passed to the model. This is a JSON object.
     property var models: (Config.options?.policies?.ai ?? 0) === 2 ? {} : {
-        "gemini-2.0-flash": aiModelComponent.createObject(this, {
-            "name": "Gemini 2.0 Flash",
-            "icon": "google-gemini-symbolic",
-            "description": Translation.tr("Online | Google's model\nFast, can perform searches for up-to-date information"),
-            "homepage": "https://aistudio.google.com",
-            "endpoint": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent",
-            "model": "gemini-2.0-flash",
-            "requires_key": true,
-            "key_id": "gemini",
-            "key_get_link": "https://aistudio.google.com/app/apikey",
-            "key_get_description": Translation.tr("**Pricing**: free. Data used for training.\n\n**Instructions**: Log into Google account, allow AI Studio to create Google Cloud project or whatever it asks, go back and click Get API key"),
-            "api_format": "gemini",
-        }),
         "gemini-2.5-flash": aiModelComponent.createObject(this, {
             "name": "Gemini 2.5 Flash",
             "icon": "google-gemini-symbolic",
@@ -283,26 +270,13 @@ Singleton {
             "key_get_description": Translation.tr("**Pricing**: free. Data used for training.\n\n**Instructions**: Log into Google account, allow AI Studio to create Google Cloud project or whatever it asks, go back and click Get API key"),
             "api_format": "gemini",
         }),
-        "gemini-2.5-flash-pro": aiModelComponent.createObject(this, {
-            "name": "Gemini 2.5 Pro",
+        "gemini-3-flash": aiModelComponent.createObject(this, {
+            "name": "Gemini 3 Flash",
             "icon": "google-gemini-symbolic",
-            "description": Translation.tr("Online | Google's model\nGoogle's state-of-the-art multipurpose model that excels at coding and complex reasoning tasks."),
+            "description": Translation.tr("Online | Google's model\nPro-level intelligence at the speed and pricing of Flash."),
             "homepage": "https://aistudio.google.com",
-            "endpoint": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:streamGenerateContent",
-            "model": "gemini-2.5-pro",
-            "requires_key": true,
-            "key_id": "gemini",
-            "key_get_link": "https://aistudio.google.com/app/apikey",
-            "key_get_description": Translation.tr("**Pricing**: free. Data used for training.\n\n**Instructions**: Log into Google account, allow AI Studio to create Google Cloud project or whatever it asks, go back and click Get API key"),
-            "api_format": "gemini",
-        }),
-        "gemini-2.5-flash-lite": aiModelComponent.createObject(this, {
-            "name": "Gemini 2.5 Flash-Lite",
-            "icon": "google-gemini-symbolic",
-            "description": Translation.tr("Online | Google's model\nA Gemini 2.5 Flash model optimized for cost-efficiency and high throughput."),
-            "homepage": "https://aistudio.google.com",
-            "endpoint": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:streamGenerateContent",
-            "model": "gemini-2.5-flash-lite",
+            "endpoint": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:streamGenerateContent",
+            "model": "gemini-3-flash-preview",
             "requires_key": true,
             "key_id": "gemini",
             "key_get_link": "https://aistudio.google.com/app/apikey",
@@ -322,19 +296,6 @@ Singleton {
             "key_get_description": Translation.tr("**Instructions**: Log into Mistral account, go to Keys on the sidebar, click Create new key"),
             "api_format": "mistral",
         }),
-        "github-gpt-5-nano": aiModelComponent.createObject(this, {
-            "name": "GPT-5 Nano (GH Models)",
-            "icon": "github-symbolic",
-            "api_format": "openai",
-            "description": Translation.tr("Online via %1 | %2's model").arg("GitHub Models").arg("OpenAI"),
-            "homepage": "https://github.com/marketplace/models",
-            "endpoint": "https://models.inference.ai.azure.com/chat/completions",
-            "model": "gpt-5-nano",
-            "requires_key": true,
-            "key_id": "github",
-            "key_get_link": "https://github.com/settings/tokens",
-            "key_get_description": Translation.tr("**Pricing**: Free tier available with limited rates. See https://docs.github.com/en/billing/concepts/product-billing/github-models\n\n**Instructions**: Generate a GitHub personal access token with Models permission, then set as API key here\n\n**Note**: To use this you will have to set the temperature parameter to 1"),
-        }),
         "openrouter-deepseek-r1": aiModelComponent.createObject(this, {
             "name": "DeepSeek R1",
             "icon": "deepseek-symbolic",
@@ -349,7 +310,11 @@ Singleton {
         }),
     }
     property var modelList: Object.keys(root.models)
-    property var currentModelId: Persistent.states?.ai?.model || modelList[0]
+    property var currentModelId: {
+        const saved = Persistent.states?.ai?.model
+        // Validate saved model still exists, fallback to first available
+        return (saved && root.models[saved]) ? saved : modelList[0]
+    }
 
     property var apiStrategies: {
         "openai": openaiApiStrategy.createObject(this),
