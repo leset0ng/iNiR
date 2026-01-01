@@ -75,11 +75,12 @@ Scope {
                 MouseArea {
                     id: dockMouseArea
                     hoverEnabled: true
+                    acceptedButtons: Qt.NoButton
 
                     width: root.isVertical ? parent.width : undefined
                     height: root.isVertical ? undefined : parent.height
-                    implicitWidth: root.isVertical ? parent.width : (dockHoverRegion.implicitWidth + Appearance.sizes.elevationMargin * 2)
-                    implicitHeight: root.isVertical ? (dockHoverRegion.implicitHeight + Appearance.sizes.elevationMargin * 2) : parent.height
+                    implicitWidth: root.isVertical ? parent.width : (dockBackground.implicitWidth + Appearance.sizes.elevationMargin * 2)
+                    implicitHeight: root.isVertical ? (dockBackground.implicitHeight + Appearance.sizes.elevationMargin * 2) : parent.height
 
                     anchors {
                         top: root.isTop ? parent.top : (!root.isVertical ? parent.top : undefined)
@@ -106,8 +107,9 @@ Scope {
                     Item {
                         id: dockHoverRegion
                         anchors.fill: parent
-                        implicitWidth: dockBackground.implicitWidth
-                        implicitHeight: dockBackground.implicitHeight
+                        // Remove binding loop - use dockRoot dimensions directly
+                        // implicitWidth: dockBackground.implicitWidth
+                        // implicitHeight: dockBackground.implicitHeight
 
                         Item {
                             id: dockBackground
@@ -121,8 +123,9 @@ Scope {
                                 verticalCenter: root.isVertical ? parent.verticalCenter : undefined
                             }
 
-                            implicitWidth: root.isVertical ? (parent.width - Appearance.sizes.elevationMargin - Appearance.sizes.hyprlandGapsOut) : (dockRow.implicitWidth + 10)
-                            implicitHeight: root.isVertical ? (dockColumn.implicitHeight + 10) : (parent.height - Appearance.sizes.elevationMargin - Appearance.sizes.hyprlandGapsOut)
+                            // Use dockRoot dimensions to avoid binding loop
+                            implicitWidth: root.isVertical ? (dockRoot.width - Appearance.sizes.elevationMargin - Appearance.sizes.hyprlandGapsOut) : (dockRow.implicitWidth + 10)
+                            implicitHeight: root.isVertical ? (dockColumn.implicitHeight + 10) : (dockRoot.height - Appearance.sizes.elevationMargin - Appearance.sizes.hyprlandGapsOut)
                             width: implicitWidth
                             height: implicitHeight
 

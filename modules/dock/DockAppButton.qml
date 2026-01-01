@@ -1,5 +1,6 @@
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.common.functions
 import Qt5Compat.GraphicalEffects
 import QtQuick
@@ -17,7 +18,6 @@ DockButton {
     property real countDotHeight: 4
     property bool appIsActive: appToplevel.toplevels.find(t => (t.activated == true)) !== undefined
     property bool hasWindows: appToplevel.toplevels.length > 0
-    property bool buttonHovered: false
     
     // Determine focused window index for smart indicator (Niri only)
     // Returns the index (0-based) of the focused window sorted by column position
@@ -80,6 +80,13 @@ DockButton {
     implicitHeight: isSeparator ? (vertical ? 8 : separatorSize) : 50
     background.visible: !isSeparator
 
+    // Hover shadow
+    StyledRectangularShadow {
+        target: root.background
+        opacity: root.buttonHovered && !root.isSeparator ? 0.6 : 0
+        Behavior on opacity { NumberAnimation { duration: 150 } }
+    }
+
     Loader {
         active: isSeparator
         anchors.centerIn: parent
@@ -92,24 +99,14 @@ DockButton {
         }
     }
 
-    Loader {
-        anchors.fill: parent
-        active: appToplevel.toplevels.length > 0
-        sourceComponent: MouseArea {
-            id: mouseArea
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
-            onEntered: {
-                root.buttonHovered = true
+    // Use RippleButton's built-in buttonHovered instead of separate MouseArea
+    onButtonHoveredChanged: {
+        if (appToplevel.toplevels.length > 0) {
+            if (buttonHovered) {
                 appListRoot.lastHoveredButton = root
                 appListRoot.buttonHovered = true
-            }
-            onExited: {
-                root.buttonHovered = false
-                if (appListRoot.lastHoveredButton === root) {
-                    appListRoot.buttonHovered = false
-                }
+            } else if (appListRoot.lastHoveredButton === root) {
+                appListRoot.buttonHovered = false
             }
         }
     }

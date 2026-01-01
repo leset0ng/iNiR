@@ -15,6 +15,10 @@ RippleButton {
     implicitHeight: 50
     buttonRadius: Appearance.rounding.normal
 
+    // Hover colors for dock (Layer0 context)
+    colBackgroundHover: Appearance.colors.colLayer0Hover
+    colRipple: Appearance.colors.colLayer0Active
+
     background.implicitHeight: 50
     background.implicitWidth: 50
 }
