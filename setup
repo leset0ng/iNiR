@@ -327,6 +327,9 @@ run_update() {
         for dir in modules services scripts assets translations sdata/uv; do
             [[ -d "${II_SOURCE}/${dir}" ]] && rsync -a --delete "${II_SOURCE}/${dir}/" "${II_TARGET}/${dir}/"
         done
+        
+        # Cleanup deprecated files
+        [[ -f "${II_TARGET}/requirements.txt" ]] && rm -f "${II_TARGET}/requirements.txt"
     fi
     
     # Generate manifest
