@@ -8,9 +8,15 @@ Item {
     property real maxVisualizerValue: 1000
     property int smoothing: 2
     property bool live: true
-    property color colorLow: Appearance.colors.colSecondaryContainer
-    property color colorMed: Appearance.colors.colPrimary
-    property color colorHigh: Appearance.colors.colPrimary
+    property color colorLow: Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                           : Appearance.auroraEverywhere ? Appearance.m3colors.m3secondaryContainer
+                           : Appearance.colors.colSecondaryContainer
+    property color colorMed: Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                           : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+                           : Appearance.colors.colPrimary
+    property color colorHigh: Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                            : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+                            : Appearance.colors.colPrimary
     property int barCount: 50
     property real barSpacing: 2
     property real barMinHeight: 2
