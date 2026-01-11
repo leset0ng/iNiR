@@ -28,8 +28,8 @@ ContentPage {
             
             property string searchQuery: ""
             property int selectedTab: 0  // 0=All, 1=Dark, 2=Light
-            property var selectedTags: []  // Active tag filters
-            
+            property string selectedTag: ""  // Single active tag filter
+
             function isDarkTheme(preset) {
                 if (preset.id === "auto" || preset.id === "custom") return true
                 if (!preset.colors) return true
@@ -39,16 +39,12 @@ ContentPage {
                 const b = parseInt(bg.slice(5, 7), 16) / 255
                 return (0.299 * r + 0.587 * g + 0.114 * b) < 0.5
             }
-            
+
             function toggleTag(tagId) {
-                const idx = selectedTags.indexOf(tagId)
-                if (idx >= 0) {
-                    selectedTags = selectedTags.filter(t => t !== tagId)
-                } else {
-                    selectedTags = [...selectedTags, tagId]
-                }
+                // Single selection: click same tag to deselect, different tag to switch
+                selectedTag = (selectedTag === tagId) ? "" : tagId
             }
-            
+
             readonly property var filteredPresets: {
                 let result = []
                 const favorites = Config.options?.appearance?.favoriteThemes ?? []
@@ -57,11 +53,10 @@ ContentPage {
                     // Dark/Light filter
                     if (selectedTab === 1 && !isDarkTheme(preset)) continue
                     if (selectedTab === 2 && isDarkTheme(preset)) continue
-                    // Tag filter - preset must have ALL selected tags
-                    if (selectedTags.length > 0) {
+                    // Tag filter - single tag selection
+                    if (selectedTag.length > 0) {
                         const presetTags = preset.tags ?? []
-                        const hasAllTags = selectedTags.every(t => presetTags.includes(t))
-                        if (!hasAllTags) continue
+                        if (!presetTags.includes(selectedTag)) continue
                     }
                     // Search filter
                     if (searchQuery.length > 0) {
@@ -234,7 +229,7 @@ ContentPage {
                     Rectangle {
                         required property var modelData
                         
-                        readonly property bool isActive: themesGroup.selectedTags.includes(modelData.id)
+                        readonly property bool isActive: themesGroup.selectedTag === modelData.id
                         
                         width: tagRow.implicitWidth + 12
                         height: 24
@@ -272,9 +267,9 @@ ContentPage {
                     }
                 }
                 
-                // Clear all tags button
+                // Clear tag button
                 Rectangle {
-                    visible: themesGroup.selectedTags.length > 0
+                    visible: themesGroup.selectedTag.length > 0
                     width: 24
                     height: 24
                     radius: 12
@@ -292,10 +287,10 @@ ContentPage {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: themesGroup.selectedTags = []
+                        onClicked: themesGroup.selectedTag = ""
                     }
-                    
-                    StyledToolTip { text: Translation.tr("Clear filters"); visible: clearMouse.containsMouse }
+
+                    StyledToolTip { text: Translation.tr("Clear filter"); visible: clearMouse.containsMouse }
                 }
             }
 
@@ -330,7 +325,7 @@ ContentPage {
                     return result
                 }
 
-                visible: quickAccessItems.length > 0 && themesGroup.selectedTags.length === 0 && themesGroup.searchQuery.length === 0
+                visible: quickAccessItems.length > 0 && themesGroup.selectedTag.length === 0 && themesGroup.searchQuery.length === 0
 
                 RowLayout {
                     Layout.fillWidth: true
