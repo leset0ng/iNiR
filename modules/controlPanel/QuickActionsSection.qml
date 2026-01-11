@@ -1,238 +1,183 @@
 pragma ComponentBehavior: Bound
+import qs
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 
-Item {
+Rectangle {
     id: root
     Layout.fillWidth: true
-    implicitHeight: content.implicitHeight
+    implicitHeight: actionsGrid.implicitHeight + 16
     
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    Rectangle {
-        id: content
+    radius: inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    color: inirEverywhere ? Appearance.inir.colLayer1
+         : auroraEverywhere ? Appearance.aurora.colSubSurface
+         : Appearance.colors.colLayer1
+    border.width: inirEverywhere ? 1 : 0
+    border.color: inirEverywhere ? Appearance.inir.colBorder : "transparent"
+
+    GridLayout {
+        id: actionsGrid
         anchors.fill: parent
-        implicitHeight: actionsLayout.implicitHeight + 24
-        radius: root.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-        color: root.inirEverywhere ? Appearance.inir.colLayer1
-             : root.auroraEverywhere ? Appearance.aurora.colSubSurface
-             : Appearance.colors.colLayer1
-        border.width: root.inirEverywhere ? 1 : 0
-        border.color: Appearance.inir.colBorder
+        anchors.margins: 8
+        columns: 4
+        rowSpacing: 6
+        columnSpacing: 6
 
-        ColumnLayout {
-            id: actionsLayout
-            anchors.fill: parent
-            anchors.margins: 12
-            spacing: 10
+        // Row 1: Audio
+        ActionTile {
+            icon: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
+            active: !(Audio.sink?.audio?.muted ?? false)
+            onClicked: Audio.sink?.audio?.toggleMute()
+        }
 
-            // Header
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
+        ActionTile {
+            icon: Audio.source?.audio?.muted ? "mic_off" : "mic"
+            active: !(Audio.source?.audio?.muted ?? false)
+            onClicked: Audio.source?.audio?.toggleMute()
+        }
 
-                MaterialSymbol {
-                    text: "bolt"
-                    iconSize: 18
-                    color: root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-                }
+        ActionTile {
+            icon: "notifications"
+            active: !Notifications.silent
+            onClicked: Notifications.silent = !Notifications.silent
+        }
 
-                StyledText {
-                    text: Translation.tr("Quick Actions")
-                    font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.Medium
-                    color: root.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-                }
+        ActionTile {
+            icon: "dark_mode"
+            active: Appearance.m3colors.darkmode
+            onClicked: Appearance.toggleDarkMode()
+        }
 
-                Item { Layout.fillWidth: true }
+        // Row 2: Connectivity & System
+        ActionTile {
+            icon: Network.wifiEnabled ? "wifi" : "wifi_off"
+            active: Network.wifiEnabled
+            onClicked: Network.toggleWifi()
+        }
+
+        ActionTile {
+            visible: BluetoothStatus.available
+            icon: BluetoothStatus.enabled ? "bluetooth" : "bluetooth_disabled"
+            active: BluetoothStatus.enabled
+            onClicked: BluetoothStatus.toggle()
+        }
+
+        ActionTile {
+            icon: "coffee"
+            active: Idle.inhibit
+            onClicked: Idle.toggleInhibit()
+        }
+
+        ActionTile {
+            icon: "sports_esports"
+            active: GameMode.active
+            onClicked: GameMode.toggle()
+        }
+
+        // Row 3: Tools
+        ActionTile {
+            icon: "screenshot_monitor"
+            onClicked: {
+                GlobalStates.controlPanelOpen = false
+                GlobalStates.regionSelectorOpen = true
             }
+        }
 
-            // Actions grid - Row 1: Audio & Connectivity
-            GridLayout {
-                Layout.fillWidth: true
-                columns: 4
-                rowSpacing: 8
-                columnSpacing: 8
+        ActionTile {
+            icon: "settings"
+            onClicked: {
+                GlobalStates.controlPanelOpen = false
+                Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+            }
+        }
 
-                QuickActionButton {
-                    icon: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
-                    label: Translation.tr("Sound")
-                    active: !(Audio.sink?.audio?.muted ?? false)
-                    onClicked: {
-                        if (Audio.sink?.audio) {
-                            Audio.sink.audio.muted = !Audio.sink.audio.muted
-                        }
-                    }
-                }
+        ActionTile {
+            icon: "lock"
+            onClicked: {
+                GlobalStates.controlPanelOpen = false
+                Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "lock", "activate"])
+            }
+        }
 
-                QuickActionButton {
-                    icon: Audio.source?.audio?.muted ? "mic_off" : "mic"
-                    label: Translation.tr("Mic")
-                    active: !(Audio.source?.audio?.muted ?? false)
-                    onClicked: {
-                        if (Audio.source?.audio) {
-                            Audio.source.audio.muted = !Audio.source.audio.muted
-                        }
-                    }
-                }
-
-                QuickActionButton {
-                    icon: Network.wifiEnabled ? Network.materialSymbol : "wifi_off"
-                    label: "WiFi"
-                    active: Network.wifiEnabled
-                    onClicked: Network.toggleWifi()
-                }
-
-                QuickActionButton {
-                    visible: BluetoothStatus.available
-                    icon: BluetoothStatus.enabled ? "bluetooth" : "bluetooth_disabled"
-                    label: "Bluetooth"
-                    active: BluetoothStatus.enabled
-                    onClicked: BluetoothStatus.toggle()
-                }
-
-                // Row 2: Display & Notifications
-                QuickActionButton {
-                    icon: Notifications.silent ? "notifications_off" : "notifications"
-                    label: Translation.tr("DND")
-                    active: Notifications.silent
-                    onClicked: Notifications.silent = !Notifications.silent
-                }
-
-                QuickActionButton {
-                    icon: "dark_mode"
-                    label: Translation.tr("Dark")
-                    active: Appearance.m3colors.darkmode
-                    onClicked: {
-                        const newMode = !Appearance.m3colors.darkmode
-                        Config.setNestedValue("appearance.darkMode", newMode)
-                    }
-                }
-
-                QuickActionButton {
-                    icon: "nightlight"
-                    label: Translation.tr("Night")
-                    active: Hyprsunset.active
-                    onClicked: Hyprsunset.toggle()
-                }
-
-                QuickActionButton {
-                    icon: Idle.inhibit ? "coffee" : "coffee"
-                    label: Translation.tr("Caffeine")
-                    active: Idle.inhibit
-                    onClicked: Idle.toggleInhibit()
-                }
-
-                // Row 3: Performance & System
-                QuickActionButton {
-                    icon: "sports_esports"
-                    label: Translation.tr("Game")
-                    active: GameMode.active
-                    onClicked: GameMode.toggle()
-                }
-
-                QuickActionButton {
-                    icon: "screenshot_monitor"
-                    label: Translation.tr("Screenshot")
-                    onClicked: {
-                        GlobalStates.controlPanelOpen = false
-                        GlobalStates.regionSelectorOpen = true
-                    }
-                }
-
-                QuickActionButton {
-                    icon: "settings"
-                    label: Translation.tr("Settings")
-                    onClicked: {
-                        GlobalStates.controlPanelOpen = false
-                        Quickshell.exec(["fish", "-c", "qs ipc call -c ii settings openSettingsDialog"])
-                    }
-                }
-
-                QuickActionButton {
-                    icon: "power_settings_new"
-                    label: Translation.tr("Session")
-                    onClicked: {
-                        GlobalStates.controlPanelOpen = false
-                        GlobalStates.sessionOpen = true
-                    }
-                }
+        ActionTile {
+            icon: "power_settings_new"
+            iconColor: root.inirEverywhere ? Appearance.inir.colError
+                     : root.auroraEverywhere ? Appearance.m3colors.m3error
+                     : Appearance.colors.colError
+            onClicked: {
+                GlobalStates.controlPanelOpen = false
+                GlobalStates.sessionOpen = true
             }
         }
     }
 
-    component QuickActionButton: Rectangle {
-        id: actionButton
+    component ActionTile: Rectangle {
+        id: tile
         property string icon
-        property string label
         property bool active: false
+        property color iconColor: active 
+            ? (root.inirEverywhere ? Appearance.inir.colOnPrimary 
+             : root.auroraEverywhere ? Appearance.m3colors.m3onPrimary
+             : Appearance.colors.colOnPrimary)
+            : (root.inirEverywhere ? Appearance.inir.colText 
+             : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
+             : Appearance.colors.colOnLayer1)
         signal clicked()
 
         Layout.fillWidth: true
-        implicitHeight: actionLayout.implicitHeight + 16
+        implicitHeight: 36
         radius: root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-        color: actionMouseArea.containsMouse 
+        
+        color: tileMouseArea.containsMouse 
             ? (active 
-                ? (root.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryActive)
-                : (root.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colors.colLayer2Hover))
+                ? (root.inirEverywhere ? Appearance.inir.colPrimaryHover 
+                 : root.auroraEverywhere ? Appearance.colors.colPrimaryHover
+                 : Appearance.colors.colPrimaryHover)
+                : (root.inirEverywhere ? Appearance.inir.colLayer2Hover 
+                 : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
+                 : Appearance.colors.colLayer2Hover))
             : (active 
-                ? (root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                : (root.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.colors.colLayer2))
+                ? (root.inirEverywhere ? Appearance.inir.colPrimary 
+                 : root.auroraEverywhere ? Appearance.m3colors.m3primary
+                 : Appearance.colors.colPrimary)
+                : (root.inirEverywhere ? Appearance.inir.colLayer2 
+                 : root.auroraEverywhere ? Appearance.aurora.colSubSurface
+                 : Appearance.colors.colLayer2))
+
         border.width: root.inirEverywhere ? 1 : 0
-        border.color: active ? Appearance.inir.colPrimary : Appearance.inir.colBorderSubtle
+        border.color: root.inirEverywhere ? (active ? Appearance.inir.colPrimary : Appearance.inir.colBorderSubtle) : "transparent"
 
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
         }
 
-        ColumnLayout {
-            id: actionLayout
+        MaterialSymbol {
             anchors.centerIn: parent
-            spacing: 4
+            text: tile.icon
+            iconSize: 18
+            color: tile.iconColor
 
-            MaterialSymbol {
-                Layout.alignment: Qt.AlignHCenter
-                text: icon
-                iconSize: 20
-                fill: active ? 1 : 0
-                color: active 
-                    ? (root.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary)
-                    : (root.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1)
-
-                Behavior on color {
-                    enabled: Appearance.animationsEnabled
-                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
-                }
-            }
-
-            StyledText {
-                Layout.alignment: Qt.AlignHCenter
-                text: label
-                font.pixelSize: Appearance.font.pixelSize.smallest
-                color: active 
-                    ? (root.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary)
-                    : (root.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext)
-                horizontalAlignment: Text.AlignHCenter
-
-                Behavior on color {
-                    enabled: Appearance.animationsEnabled
-                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
-                }
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
             }
         }
 
         MouseArea {
-            id: actionMouseArea
+            id: tileMouseArea
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: actionButton.clicked()
+            onClicked: tile.clicked()
         }
     }
 }

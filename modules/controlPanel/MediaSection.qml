@@ -29,7 +29,6 @@ Item {
     property string artFilePath: artFileName ? `${artDownloadLocation}/${artFileName}` : ""
     property bool downloaded: false
     property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) : ""
-    property list<real> visualizerPoints: []
     property int _downloadRetryCount: 0
     readonly property int _maxRetries: 3
 
@@ -113,17 +112,13 @@ Item {
         }
     }
 
-    Process {
-        id: cavaProc
-        running: root.visible && root.hasPlayer && GlobalStates.controlPanelOpen
-        onRunningChanged: { if (!running) root.visualizerPoints = [] }
-        command: ["cava", "-p", `${FileUtils.trimFileProtocol(Directories.scriptPath)}/cava/raw_output_config.txt`]
-        stdout: SplitParser {
-            onRead: data => {
-                root.visualizerPoints = data.split(";").map(p => parseFloat(p.trim())).filter(p => !isNaN(p))
-            }
-        }
+    // Cava audio visualizer
+    CavaProcess {
+        id: cavaProcess
+        active: root.visible && root.hasPlayer && GlobalStates.controlPanelOpen
     }
+    
+    property list<real> visualizerPoints: cavaProcess.points
 
     ColorQuantizer {
         id: colorQuantizer
@@ -154,7 +149,7 @@ Item {
              : root.auroraEverywhere ? ColorUtils.transparentize(root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
              : (root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
         border.width: root.inirEverywhere ? 1 : 0
-        border.color: Appearance.inir.colBorder
+        border.color: root.inirEverywhere ? Appearance.inir.colBorder : "transparent"
         clip: true
 
         layer.enabled: true
@@ -169,6 +164,9 @@ Item {
             source: root.displayedArtFilePath
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
+            cache: true
+            smooth: true
+            mipmap: true
             opacity: root.inirEverywhere ? 0.15 : (root.auroraEverywhere ? 0.25 : 0.5)
             visible: root.displayedArtFilePath !== ""
 
@@ -238,6 +236,11 @@ Item {
                     source: root.displayedArtFilePath
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
+                    cache: true
+                    smooth: true
+                    mipmap: true
+                    sourceSize.width: 272
+                    sourceSize.height: 272
                 }
 
                 Rectangle {
@@ -367,36 +370,19 @@ Item {
                         id: playPauseButton
                         implicitWidth: 44
                         implicitHeight: 44
-                        buttonRadius: root.inirEverywhere 
-                            ? Appearance.inir.roundingSmall 
-                            : (root.player?.isPlaying ? Appearance.rounding.normal : Appearance.rounding.full)
-                        colBackground: root.inirEverywhere
-                            ? "transparent"
-                            : root.auroraEverywhere
-                                ? "transparent"
-                                : (root.player?.isPlaying 
-                                    ? (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                                    : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer))
+                        buttonRadius: root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                        colBackground: "transparent"
                         colBackgroundHover: root.inirEverywhere
                             ? Appearance.inir.colLayer2Hover
                             : root.auroraEverywhere
                                 ? ColorUtils.transparentize(root.blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
-                                : (root.player?.isPlaying 
-                                    ? (root.blendedColors?.colPrimaryHover ?? Appearance.colors.colPrimaryHover)
-                                    : (root.blendedColors?.colSecondaryContainerHover ?? Appearance.colors.colSecondaryContainerHover))
+                                : Appearance.colors.colLayer1Hover
                         colRipple: root.inirEverywhere
                             ? Appearance.inir.colLayer2Active
                             : root.auroraEverywhere
                                 ? (root.blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
-                                : (root.player?.isPlaying 
-                                    ? (root.blendedColors?.colPrimaryActive ?? Appearance.colors.colPrimaryActive)
-                                    : (root.blendedColors?.colSecondaryContainerActive ?? Appearance.colors.colSecondaryContainerActive))
+                                : Appearance.colors.colLayer1Active
                         onClicked: root.player?.togglePlaying()
-
-                        Behavior on buttonRadius {
-                            enabled: Appearance.animationsEnabled && !root.inirEverywhere
-                            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                        }
 
                         contentItem: Item {
                             MaterialSymbol {
@@ -408,14 +394,7 @@ Item {
                                     ? root.jiraColPrimary
                                     : root.auroraEverywhere
                                         ? (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-                                        : (root.player?.isPlaying 
-                                            ? (root.blendedColors?.colOnPrimary ?? Appearance.colors.colOnPrimary)
-                                            : (root.blendedColors?.colOnSecondaryContainer ?? Appearance.colors.colOnSecondaryContainer))
-
-                                Behavior on color {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
-                                }
+                                        : Appearance.colors.colOnLayer1
                             }
                         }
 

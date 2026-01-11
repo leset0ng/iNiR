@@ -10,8 +10,8 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
-    property int panelWidth: 440
-    property int panelHeight: Math.min(840, (panelRoot.screen?.height ?? 1080) - Appearance.sizes.hyprlandGapsOut * 4 - Appearance.sizes.baseBarHeight)
+    property int panelWidth: 380
+    property int maxPanelHeight: (panelRoot.screen?.height ?? 1080) - Appearance.sizes.hyprlandGapsOut * 4 - Appearance.sizes.baseBarHeight - 40
 
     PanelWindow {
         id: panelRoot
@@ -69,7 +69,7 @@ Scope {
             }
             
             width: root.panelWidth
-            height: root.panelHeight
+            height: item?.implicitHeight ? Math.min(item.implicitHeight, root.maxPanelHeight) : root.maxPanelHeight
 
             // Slide + fade animation
             transform: Translate {

@@ -19,6 +19,8 @@ Item {
     property int screenWidth: 1920
     property int screenHeight: 1080
     
+    implicitHeight: background.implicitHeight
+    
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     
@@ -44,7 +46,10 @@ Item {
 
     Rectangle {
         id: background
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        implicitHeight: flickable.contentHeight + 24
         
         color: root.inirEverywhere ? Appearance.inir.colLayer0
              : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
@@ -92,63 +97,23 @@ Item {
         }
 
         // Content
-        ScrollView {
-            id: scrollView
+        Flickable {
+            id: flickable
             anchors.fill: parent
             anchors.margins: 12
             clip: true
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-            ScrollBar.vertical.policy: ScrollBar.AsNeeded
+            contentWidth: width
+            contentHeight: contentLayout.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
+            flickDeceleration: 3000
 
             ColumnLayout {
                 id: contentLayout
-                width: scrollView.availableWidth
-                spacing: 12
+                width: flickable.width
+                spacing: 10
 
-                // Header
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: "dashboard"
-                        iconSize: 20
-                        color: root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-                    }
-
-                    StyledText {
-                        text: Translation.tr("Control Center")
-                        font.pixelSize: Appearance.font.pixelSize.large
-                        font.weight: Font.Medium
-                        color: root.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    // Close button
-                    RippleButton {
-                        implicitWidth: 32
-                        implicitHeight: 32
-                        buttonRadius: root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-                        colBackground: "transparent"
-                        colBackgroundHover: root.inirEverywhere ? Appearance.inir.colLayer2Hover 
-                            : root.auroraEverywhere ? Appearance.aurora.colSubSurface 
-                            : Appearance.colors.colLayer1Hover
-                        colRipple: root.inirEverywhere ? Appearance.inir.colLayer2Active 
-                            : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
-                            : Appearance.colors.colLayer1Active
-                        onClicked: GlobalStates.controlPanelOpen = false
-
-                        contentItem: Item {
-                            MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "close"
-                                iconSize: 18
-                                color: root.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-                            }
-                        }
-                    }
-                }
+                // Header with User Profile
+                ProfileHeader {}
 
                 // Date/Time header
                 DateTimeHeader {}
@@ -165,10 +130,23 @@ Item {
                 // System Info Section  
                 SystemSection {}
 
+                // Volume & Brightness Sliders
+                SlidersSection {}
+
                 // Quick actions
                 QuickActionsSection {}
 
                 Item { Layout.preferredHeight: 8 }
+            }
+
+            WheelHandler {
+                onWheel: (event) => {
+                    const delta = event.angleDelta.y / 3
+                    flickable.contentY = Math.max(0, Math.min(
+                        flickable.contentHeight - flickable.height,
+                        flickable.contentY - delta
+                    ))
+                }
             }
         }
     }
