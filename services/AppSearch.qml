@@ -11,7 +11,7 @@ import Quickshell
  */
 Singleton {
     id: root
-    property bool sloppySearch: Config.options?.search.sloppy ?? false
+    property bool sloppySearch: Config.options?.search?.sloppy ?? false
     property real scoreThreshold: 0.2
     property var substitutions: ({
         "code-url-handler": "visual-studio-code",
@@ -77,22 +77,71 @@ Singleton {
 
     function fuzzyQuery(search: string): var {
         if (_cachedList.length === 0) return []
+        if (!search || search.trim() === "") return []
+
+        const searchLower = search.toLowerCase().trim()
+
+        // Fast path: exact prefix match gets priority
+        const exactPrefixMatches = _cachedList.filter(obj =>
+            obj.name?.toLowerCase().startsWith(searchLower)
+        )
+
         if (root.sloppySearch) {
-            const results = _cachedList.map(obj => ({
-                entry: obj,
-                score: Levendist.computeScore(obj.name.toLowerCase(), search.toLowerCase())
-            })).filter(item => item.score > root.scoreThreshold)
-                .sort((a, b) => b.score - a.score)
-            return results
-                .map(item => item.entry)
+            // Levenshtein-based scoring
+            const results = _cachedList.map(obj => {
+                const nameLower = obj.name?.toLowerCase() ?? ""
+                let score = Levendist.computeScore(nameLower, searchLower)
+
+                // Boost for prefix match
+                if (nameLower.startsWith(searchLower)) {
+                    score += 0.3
+                }
+                // Boost for word boundary match
+                else if (nameLower.includes(" " + searchLower) || nameLower.includes("-" + searchLower)) {
+                    score += 0.15
+                }
+                // Boost for contains
+                else if (nameLower.includes(searchLower)) {
+                    score += 0.1
+                }
+
+                return { entry: obj, score: Math.min(1.0, score) }
+            }).filter(item => item.score > root.scoreThreshold)
+              .sort((a, b) => b.score - a.score)
+
+            return results.map(item => item.entry)
         }
 
-        return Fuzzy.go(search, preppedNames, {
+        // Hybrid approach: combine fuzzysort with smart scoring
+        const fuzzyResults = Fuzzy.go(search, preppedNames, {
             all: true,
-            key: "name"
-        }).map(r => {
-            return r.obj.entry
-        });
+            key: "name",
+            threshold: -10000 // Get all results, we'll filter ourselves
+        })
+
+        // Score and sort results
+        const scoredResults = fuzzyResults.map(r => {
+            const entry = r.obj.entry
+            const nameLower = entry.name?.toLowerCase() ?? ""
+            let score = r.score
+
+            // Significant boost for exact prefix match
+            if (nameLower.startsWith(searchLower)) {
+                score += 50000
+            }
+            // Boost for word start match
+            else if (nameLower.includes(" " + searchLower) || nameLower.includes("-" + searchLower)) {
+                score += 20000
+            }
+            // Small boost for substring match
+            else if (nameLower.includes(searchLower)) {
+                score += 10000
+            }
+
+            return { entry, score }
+        }).sort((a, b) => b.score - a.score)
+
+        return scoredResults.map(item => item.entry)
     }
 
     function iconExists(iconName) {

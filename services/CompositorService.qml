@@ -380,7 +380,7 @@ Singleton {
         if (xdgCurrentDesktop && (xdgCurrentDesktop.includes("GNOME") || xdgCurrentDesktop.includes("gnome"))) {
             isHyprland = false
             isNiri = false
-            isGnome = false
+            isGnome = true
             compositor = "gnome"
             console.info("CompositorService: Detected GNOME Shell")
             return

@@ -112,6 +112,17 @@ Singleton {
                 if (modelData.identity === "mpv" || modelData.desktopEntry === "mpv" ||
                     modelData.identity?.includes("mpv") || modelData.desktopEntry?.includes("mpv")) {
                     root._mpvPlayer = modelData
+                    // If it's already playing, set as active
+                    if (modelData.isPlaying) {
+                        MprisController.setActivePlayer(modelData)
+                    }
+                }
+            }
+            
+            // When mpv starts playing, make it the active player
+            function onIsPlayingChanged() {
+                if (modelData === root._mpvPlayer && modelData.isPlaying) {
+                    MprisController.setActivePlayer(modelData)
                 }
             }
             
@@ -544,7 +555,7 @@ Singleton {
     
     Process {
         id: _quickConnectProc
-        command: ["python3", "scripts/ytmusic_auth.py", root.googleBrowser]
+        command: ["python3", Directories.scriptPath + "/ytmusic_auth.py", root.googleBrowser]
         
         stdout: SplitParser {
             onRead: line => {
@@ -656,7 +667,7 @@ Singleton {
             "--flat-playlist",
             "--print", "%(title)s|%(uploader)s|%(id)s|%(duration)s",
             "--playlist-end", root.maxLikedSongs.toString(),
-            "https://music.youtube.com/playlist?list=LM"
+            "https://www.youtube.com/playlist?list=LL"
         ]
         
         property var newLiked: []
@@ -912,41 +923,51 @@ Singleton {
         }
     }
 
-    // Check Google account connection by testing access to YT Music
+    // Check Google account connection by testing access to YouTube
+    // Uses liked videos playlist (LL) which requires authentication
     Process {
         id: _googleCheckProc
         property string errorOutput: ""
+        property string stdOutput: ""
         command: ["/usr/bin/yt-dlp",
             ...root._cookieArgs,
             "--flat-playlist",
             "--no-warnings",
-            "--quiet",
             "-I", "1",
             "--print", "id",
-            "https://music.youtube.com/library/playlists"
+            "https://www.youtube.com/playlist?list=LL"
         ]
+        stdout: SplitParser {
+            onRead: line => {
+                _googleCheckProc.stdOutput += line + "\n"
+            }
+        }
         stderr: SplitParser {
             onRead: line => {
                 _googleCheckProc.errorOutput += line + "\n"
             }
         }
-        onStarted: { errorOutput = "" }
+        onStarted: { errorOutput = ""; stdOutput = "" }
         onExited: (code) => {
             root.googleChecking = false
-            if (code === 0) {
+            // Success if we got any video ID back
+            if (code === 0 && stdOutput.trim().length > 0) {
                 root.googleConnected = true
                 root.googleError = ""
             } else {
                 root.googleConnected = false
                 // Parse error to give helpful message
-                if (errorOutput.includes("cookies") || errorOutput.includes("browser")) {
-                    root.googleError = Translation.tr("Could not read cookies from %1. Make sure the browser is closed.").arg(root.googleBrowser)
-                } else if (errorOutput.includes("Sign in") || errorOutput.includes("login") || errorOutput.includes("403")) {
-                    root.googleError = Translation.tr("Not logged in. Open YouTube Music in your browser and sign in first.")
-                } else if (errorOutput.includes("network") || errorOutput.includes("connection")) {
+                const err = errorOutput.toLowerCase()
+                if (err.includes("playlist does not exist") || err.includes("sign in") || err.includes("403")) {
+                    root.googleError = Translation.tr("Not logged in. Sign in to YouTube in %1, then try again.").arg(root.getBrowserDisplayName(root.googleBrowser))
+                } else if (err.includes("cookies") || err.includes("browser") || err.includes("keyring")) {
+                    root.googleError = Translation.tr("Could not read cookies. Close %1 and try again.").arg(root.getBrowserDisplayName(root.googleBrowser))
+                } else if (err.includes("network") || err.includes("connection") || err.includes("unable to download")) {
                     root.googleError = Translation.tr("Network error. Check your internet connection.")
+                } else if (err.includes("unsupported browser")) {
+                    root.googleError = Translation.tr("%1 is not supported. Try Firefox or Chrome.").arg(root.getBrowserDisplayName(root.googleBrowser))
                 } else {
-                    root.googleError = Translation.tr("Connection failed. Try a different browser or log in again.")
+                    root.googleError = Translation.tr("Not authenticated. Sign in to YouTube in your browser first.")
                 }
             }
         }
@@ -1003,7 +1024,7 @@ Singleton {
         }
     }
 
-    property string ipcSocket: "/tmp/qs-ytmusic-mpv.sock"
+    property string ipcSocket: Directories.tempImages + "/../qs-ytmusic-mpv.sock"
 
     // Stop any existing mpv playback
     Process {
@@ -1041,7 +1062,7 @@ Singleton {
         }
     }
 
-    // Fetch YouTube Music playlists from account
+    // Fetch YouTube playlists from account
     Process {
         id: _ytPlaylistsProc
         property var results: []
@@ -1049,9 +1070,8 @@ Singleton {
             ...root._cookieArgs,
             "--flat-playlist",
             "--no-warnings",
-            "--quiet",
             "-j",
-            "https://music.youtube.com/library/playlists"
+            "https://www.youtube.com/feed/playlists"
         ]
         stdout: SplitParser {
             onRead: line => {
@@ -1118,7 +1138,7 @@ Singleton {
         }
     }
     
-    // Fetch Liked Songs from YouTube Music
+    // Fetch Liked Songs from YouTube
     Process {
         id: _likedSongsProc
         property var items: []
@@ -1126,10 +1146,9 @@ Singleton {
             ...root._cookieArgs,
             "--flat-playlist",
             "--no-warnings",
-            "--quiet",
             "-j",
             "-I", "1:100",  // Limit to first 100 liked songs for performance
-            "https://music.youtube.com/playlist?list=LM"
+            "https://www.youtube.com/playlist?list=LL"
         ]
         stdout: SplitParser {
             onRead: line => {

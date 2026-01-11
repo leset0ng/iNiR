@@ -207,6 +207,81 @@ with open(config_path, "w") as f:
         ]
         onExited: (exitCode, exitStatus) => {
             console.log("[IconThemeService] kwriteconfig exited:", exitCode, "theme:", kwriteconfigProc.themeName)
+            // Also sync to qt5ct and qt6ct
+            qt5ctProc.themeName = kwriteconfigProc.themeName
+            qt5ctProc.running = false
+            qt5ctProc.running = true
+            qt6ctProc.themeName = kwriteconfigProc.themeName
+            qt6ctProc.running = false
+            qt6ctProc.running = true
+        }
+    }
+
+    // Sync icon theme to qt5ct
+    Process {
+        id: qt5ctProc
+        property string themeName: ""
+        command: [
+            "/usr/bin/python3",
+            "-c",
+            `
+import configparser
+import os
+
+theme = "${qt5ctProc.themeName}"
+config_path = os.path.expanduser("~/.config/qt5ct/qt5ct.conf")
+
+if not os.path.exists(config_path):
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+    with open(config_path, "w") as f:
+        f.write("[Appearance]\\nicon_theme=" + theme + "\\n")
+else:
+    config = configparser.ConfigParser()
+    config.optionxform = str
+    config.read(config_path)
+    if "Appearance" not in config:
+        config["Appearance"] = {}
+    config["Appearance"]["icon_theme"] = theme
+    with open(config_path, "w") as f:
+        config.write(f, space_around_delimiters=False)
+`
+        ]
+        onExited: (exitCode, exitStatus) => {
+            console.log("[IconThemeService] qt5ct updated:", exitCode === 0 ? "success" : "failed")
+        }
+    }
+
+    // Sync icon theme to qt6ct
+    Process {
+        id: qt6ctProc
+        property string themeName: ""
+        command: [
+            "/usr/bin/python3",
+            "-c",
+            `
+import configparser
+import os
+
+theme = "${qt6ctProc.themeName}"
+config_path = os.path.expanduser("~/.config/qt6ct/qt6ct.conf")
+
+if not os.path.exists(config_path):
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+    with open(config_path, "w") as f:
+        f.write("[Appearance]\\nicon_theme=" + theme + "\\n")
+else:
+    config = configparser.ConfigParser()
+    config.optionxform = str
+    config.read(config_path)
+    if "Appearance" not in config:
+        config["Appearance"] = {}
+    config["Appearance"]["icon_theme"] = theme
+    with open(config_path, "w") as f:
+        config.write(f, space_around_delimiters=False)
+`
+        ]
+        onExited: (exitCode, exitStatus) => {
+            console.log("[IconThemeService] qt6ct updated:", exitCode === 0 ? "success" : "failed")
         }
     }
 

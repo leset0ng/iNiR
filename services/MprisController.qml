@@ -22,6 +22,15 @@ Singleton {
 	property list<MprisPlayer> players: Mpris.players.values.filter(player => isRealPlayer(player));
 	property MprisPlayer trackedPlayer: null;
 	property MprisPlayer activePlayer: trackedPlayer ?? players[0] ?? null;
+
+	// Detect if active player is YtMusic's mpv instance
+	// This helps MediaPlayerWidget avoid showing duplicate controls when YtMusicPlayerCard is visible
+	readonly property bool isYtMusicActive: {
+		if (!activePlayer || !YtMusic.currentVideoId) return false;
+		const id = (activePlayer.identity ?? "").toLowerCase();
+		const entry = (activePlayer.desktopEntry ?? "").toLowerCase();
+		return id === "mpv" || entry === "mpv" || id.includes("mpv") || entry.includes("mpv");
+	}
 	
 	property bool hasPlasmaIntegration: false
 	Process {
@@ -132,12 +141,12 @@ Singleton {
 
 	property bool isPlaying: this.activePlayer && this.activePlayer.isPlaying;
 	property bool canTogglePlaying: this.activePlayer?.canTogglePlaying ?? false;
-	function togglePlaying() {
+	function togglePlaying(): void {
 		if (this.canTogglePlaying) this.activePlayer.togglePlaying();
 	}
 
 	property bool canGoPrevious: this.activePlayer?.canGoPrevious ?? false;
-	function previous() {
+	function previous(): void {
 		if (this.canGoPrevious) {
 			this.__reverse = true;
 			this.activePlayer.previous();
@@ -145,7 +154,7 @@ Singleton {
 	}
 
 	property bool canGoNext: this.activePlayer?.canGoNext ?? false;
-	function next() {
+	function next(): void {
 		if (this.canGoNext) {
 			this.__reverse = false;
 			this.activePlayer.next();
@@ -156,7 +165,7 @@ Singleton {
 
 	property bool loopSupported: this.activePlayer && this.activePlayer.loopSupported && this.activePlayer.canControl;
 	property var loopState: this.activePlayer?.loopState ?? MprisLoopState.None;
-	function setLoopState(loopState: var) {
+	function setLoopState(loopState: var): void {
 		if (this.loopSupported) {
 			this.activePlayer.loopState = loopState;
 		}
@@ -164,13 +173,13 @@ Singleton {
 
 	property bool shuffleSupported: this.activePlayer && this.activePlayer.shuffleSupported && this.activePlayer.canControl;
 	property bool hasShuffle: this.activePlayer?.shuffle ?? false;
-	function setShuffle(shuffle: bool) {
+	function setShuffle(shuffle: bool): void {
 		if (this.shuffleSupported) {
 			this.activePlayer.shuffle = shuffle;
 		}
 	}
 
-	function setActivePlayer(player: MprisPlayer) {
+	function setActivePlayer(player: MprisPlayer): void {
 		const targetPlayer = player ?? Mpris.players[0];
 		console.log(`[Mpris] Active player ${targetPlayer} << ${activePlayer}`)
 
