@@ -188,13 +188,13 @@ FEDORA_TOOLKIT_PKGS=(
 )
 
 # Screen capture packages
+# Note: ffmpeg from rpmfusion conflicts with ffmpeg-free, use --allowerasing
 FEDORA_SCREENCAPTURE_PKGS=(
   grim
   slurp
   swappy
   wf-recorder
   ImageMagick
-  ffmpeg
 )
 
 # Font packages
