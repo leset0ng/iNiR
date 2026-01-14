@@ -1050,7 +1050,7 @@ Scope {
     Timer {
         id: warmUpTimer
         interval: 2000  // 2 segundos después del inicio
-        running: !root._warmedUp && NiriService.windows.length > 0
+        running: !root._warmedUp && (NiriService.windows?.length ?? 0) > 0
         onTriggered: {
             root.rebuildSnapshot()
             root._warmedUp = true
