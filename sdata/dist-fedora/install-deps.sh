@@ -81,6 +81,15 @@ FEDORA_CORE_PKGS=(
   # Niri compositor (from COPR)
   niri
   
+  # Build tools (needed for Python packages like dbus-python)
+  gcc
+  gcc-c++
+  make
+  meson
+  pkg-config
+  python3-devel
+  dbus-devel
+  
   # Basic utilities
   bc
   coreutils
