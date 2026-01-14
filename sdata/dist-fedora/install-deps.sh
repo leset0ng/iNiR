@@ -111,7 +111,6 @@ FEDORA_CORE_PKGS=(
   libnotify
   wlsunset
   dunst
-  cliphist
   
   # XDG Portals
   xdg-desktop-portal
@@ -242,7 +241,7 @@ FEDORA_FONT_PKGS=(
 )
 
 installflags=""
-$ask || installflags="-y"
+$ask || installflags="-y --skip-unavailable"
 
 # Install core packages
 echo -e "${STY_BLUE}[$0]: Installing core packages (including Quickshell & Niri)...${STY_RST}"
