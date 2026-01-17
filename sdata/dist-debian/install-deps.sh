@@ -105,12 +105,20 @@ DEBIAN_CORE_PKGS=(
   
   # File manager
   dolphin
+  kio-extras
   
   # Terminal
   foot
   
   # Shell (required for scripts)
   fish
+  
+  # Thumbnails
+  ffmpegthumbnailer
+  tumbler
+  
+  # Translation widget
+  translate-shell
   
   # Build essentials (needed for compiling niri/quickshell)
   build-essential
@@ -184,7 +192,7 @@ DEBIAN_TOOLKIT_PKGS=(
   grim
   slurp
   imagemagick
-  qalc
+  qalculate
   blueman
   tesseract-ocr
   tesseract-ocr-eng
@@ -195,11 +203,15 @@ DEBIAN_TOOLKIT_PKGS=(
 DEBIAN_SCREENCAPTURE_PKGS=(
   grim
   slurp
-  swappy
   wf-recorder
   imagemagick
   ffmpeg
 )
+
+# Check if swappy is available (only in trixie/sid, not bookworm)
+if apt-cache show swappy &>/dev/null 2>&1; then
+  DEBIAN_SCREENCAPTURE_PKGS+=(swappy)
+fi
 
 # Font packages
 DEBIAN_FONT_PKGS=(
@@ -214,7 +226,7 @@ DEBIAN_FONT_PKGS=(
   libglib2.0-0
   
   # Qt theming
-  qt6-style-kvantum
+  kvantum
 )
 
 # Wayland packages
@@ -233,6 +245,11 @@ fi
 # Check if cava is available in repos
 if apt-cache show cava &>/dev/null 2>&1; then
   DEBIAN_AUDIO_PKGS+=(cava)
+fi
+
+# Check if kf6-kconfig is available (Ubuntu 24.04+, Debian trixie+)
+if apt-cache show kf6-kconfig &>/dev/null 2>&1; then
+  DEBIAN_FONT_PKGS+=(kf6-kconfig)
 fi
 
 installflags=""
@@ -377,6 +394,24 @@ if ${INSTALL_FONTS:-true}; then
       rm -f "$TEMP_DEB"
       echo -e "${STY_GREEN}[$0]: darkly installed${STY_RST}"
     fi
+  fi
+fi
+
+# swappy - screenshot annotation (not in bookworm, compile from source)
+if ${INSTALL_SCREENCAPTURE:-true}; then
+  if ! command -v swappy &>/dev/null; then
+    echo -e "${STY_BLUE}[$0]: Installing swappy from source...${STY_RST}"
+    v sudo apt install $installflags libgtk-3-dev libcairo2-dev libpango1.0-dev
+    
+    SWAPPY_BUILD_DIR="/tmp/swappy-build-$$"
+    git clone https://github.com/jtheoof/swappy.git "$SWAPPY_BUILD_DIR"
+    cd "$SWAPPY_BUILD_DIR"
+    meson setup build
+    ninja -C build
+    sudo ninja -C build install
+    cd "${REPO_ROOT}"
+    rm -rf "$SWAPPY_BUILD_DIR"
+    echo -e "${STY_GREEN}[$0]: swappy installed${STY_RST}"
   fi
 fi
 
@@ -567,6 +602,129 @@ if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
   rm -rf "$TEMP_DIR"
 fi
 
+# Material Symbols fonts (CRITICAL - UI icons)
+if ! fc-list | grep -qi "Material Symbols Rounded"; then
+  echo -e "${STY_BLUE}[$0]: Downloading Material Symbols Rounded font...${STY_RST}"
+  
+  MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
+  
+  if curl -fsSL -o "$FONT_DIR/MaterialSymbolsRounded.ttf" "$MATERIAL_URL"; then
+    echo -e "${STY_GREEN}[$0]: Material Symbols Rounded font installed.${STY_RST}"
+  else
+    echo -e "${STY_RED}[$0]: CRITICAL - Could not download Material Symbols. UI icons will be broken.${STY_RST}"
+  fi
+fi
+
+if ! fc-list | grep -qi "Material Symbols Outlined"; then
+  echo -e "${STY_BLUE}[$0]: Downloading Material Symbols Outlined font...${STY_RST}"
+  
+  MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
+  
+  if curl -fsSL -o "$FONT_DIR/MaterialSymbolsOutlined.ttf" "$MATERIAL_URL"; then
+    echo -e "${STY_GREEN}[$0]: Material Symbols Outlined font installed.${STY_RST}"
+  fi
+fi
+
+# Refresh font cache
+fc-cache -f "$FONT_DIR" 2>/dev/null
+
+#####################################################################################
+# Icon themes (WhiteSur, MacTahoe)
+#####################################################################################
+echo -e "${STY_CYAN}[$0]: Installing icon themes...${STY_RST}"
+
+ICON_DIR="$HOME/.local/share/icons"
+mkdir -p "$ICON_DIR"
+
+# WhiteSur icon theme
+if [[ ! -d "$ICON_DIR/WhiteSur-dark" ]]; then
+  echo -e "${STY_BLUE}[$0]: Installing WhiteSur icon theme...${STY_RST}"
+  
+  TEMP_DIR="/tmp/whitesur-icons-$$"
+  mkdir -p "$TEMP_DIR"
+  
+  if curl -fsSL -o "$TEMP_DIR/whitesur.tar.gz" \
+    "https://github.com/vinceliuice/WhiteSur-icon-theme/archive/refs/heads/master.tar.gz"; then
+    tar -xzf "$TEMP_DIR/whitesur.tar.gz" -C "$TEMP_DIR"
+    cd "$TEMP_DIR/WhiteSur-icon-theme-master"
+    ./install.sh -d "$ICON_DIR" -t default >/dev/null 2>&1 || {
+      cp -r src/WhiteSur "$ICON_DIR/WhiteSur-dark" 2>/dev/null || true
+    }
+    cd - >/dev/null
+    echo -e "${STY_GREEN}[$0]: WhiteSur icon theme installed.${STY_RST}"
+  fi
+  
+  rm -rf "$TEMP_DIR"
+fi
+
+# MacTahoe icon theme (dock icons)
+if [[ ! -d "$ICON_DIR/MacTahoe" ]]; then
+  echo -e "${STY_BLUE}[$0]: Installing MacTahoe icon theme...${STY_RST}"
+  
+  TEMP_DIR="/tmp/mactahoe-icons-$$"
+  mkdir -p "$TEMP_DIR"
+  
+  if curl -fsSL -o "$TEMP_DIR/mactahoe.tar.gz" \
+    "https://github.com/vinceliuice/MacTahoe-icon-theme/archive/refs/heads/main.tar.gz"; then
+    tar -xzf "$TEMP_DIR/mactahoe.tar.gz" -C "$TEMP_DIR"
+    cd "$TEMP_DIR/MacTahoe-icon-theme-main"
+    ./install.sh -d "$ICON_DIR" >/dev/null 2>&1 || {
+      cp -r src/MacTahoe "$ICON_DIR/MacTahoe" 2>/dev/null || true
+    }
+    cd - >/dev/null
+    echo -e "${STY_GREEN}[$0]: MacTahoe icon theme installed.${STY_RST}"
+  fi
+  
+  rm -rf "$TEMP_DIR"
+fi
+
+#####################################################################################
+# Cursor themes (Bibata, Capitaine)
+#####################################################################################
+echo -e "${STY_CYAN}[$0]: Installing cursor themes...${STY_RST}"
+
+CURSOR_DIR="$HOME/.local/share/icons"
+
+# Bibata Modern Classic cursor
+if [[ ! -d "$CURSOR_DIR/Bibata-Modern-Classic" ]]; then
+  echo -e "${STY_BLUE}[$0]: Installing Bibata Modern Classic cursor...${STY_RST}"
+  
+  BIBATA_URL=$(curl -s "https://api.github.com/repos/ful1e5/Bibata_Cursor/releases/latest" | \
+    jq -r '.assets[] | select(.name | test("Bibata-Modern-Classic.tar.xz$")) | .browser_download_url' | head -1)
+  
+  if [[ -n "$BIBATA_URL" && "$BIBATA_URL" != "null" ]]; then
+    TEMP_DIR="/tmp/bibata-$$"
+    mkdir -p "$TEMP_DIR"
+    
+    if curl -fsSL -o "$TEMP_DIR/bibata.tar.xz" "$BIBATA_URL"; then
+      tar -xJf "$TEMP_DIR/bibata.tar.xz" -C "$CURSOR_DIR"
+      echo -e "${STY_GREEN}[$0]: Bibata Modern Classic cursor installed.${STY_RST}"
+    fi
+    
+    rm -rf "$TEMP_DIR"
+  fi
+fi
+
+# Bibata Modern Ice cursor
+if [[ ! -d "$CURSOR_DIR/Bibata-Modern-Ice" ]]; then
+  echo -e "${STY_BLUE}[$0]: Installing Bibata Modern Ice cursor...${STY_RST}"
+  
+  BIBATA_URL=$(curl -s "https://api.github.com/repos/ful1e5/Bibata_Cursor/releases/latest" | \
+    jq -r '.assets[] | select(.name | test("Bibata-Modern-Ice.tar.xz$")) | .browser_download_url' | head -1)
+  
+  if [[ -n "$BIBATA_URL" && "$BIBATA_URL" != "null" ]]; then
+    TEMP_DIR="/tmp/bibata-ice-$$"
+    mkdir -p "$TEMP_DIR"
+    
+    if curl -fsSL -o "$TEMP_DIR/bibata.tar.xz" "$BIBATA_URL"; then
+      tar -xJf "$TEMP_DIR/bibata.tar.xz" -C "$CURSOR_DIR"
+      echo -e "${STY_GREEN}[$0]: Bibata Modern Ice cursor installed.${STY_RST}"
+    fi
+    
+    rm -rf "$TEMP_DIR"
+  fi
+fi
+
 #####################################################################################
 # Python environment setup
 #####################################################################################
@@ -583,9 +741,12 @@ echo -e "${STY_GREEN}═══════════════════�
 echo ""
 echo -e "${STY_CYAN}Installed from GitHub releases (no compilation):${STY_RST}"
 echo "  - gum, cliphist, matugen, darkly"
+echo "  - Material Symbols fonts, JetBrains Mono Nerd Font"
+echo "  - WhiteSur, MacTahoe icon themes"
+echo "  - Bibata cursor themes"
 echo ""
 echo -e "${STY_CYAN}Compiled from source:${STY_RST}"
-echo "  - niri, quickshell, xwayland-satellite, cava"
+echo "  - niri, quickshell, xwayland-satellite, cava, swappy"
 echo ""
 
 # Verify critical commands
