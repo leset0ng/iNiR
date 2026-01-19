@@ -54,28 +54,15 @@ Item {
         const pinnedApps = Config.options?.dock?.pinnedApps ?? [];
         const ignoredRegexes = _getIgnoredRegexes();
 
-        // Build a unified map: pinned apps first, then add open windows to them
-        const appMap = new Map();
-        
-        // 1) Add pinned apps first (they'll be shown even without windows)
-        for (const appId of pinnedApps) {
-            const lowerAppId = appId.toLowerCase();
-            appMap.set(lowerAppId, {
-                appId: appId,
-                toplevels: [],
-                pinned: true
-            });
-        }
-
-        // 2) Add open windows - combine with pinned if same app
+        // Get all open windows
         const allToplevels = CompositorService.sortedToplevels && CompositorService.sortedToplevels.length
                 ? CompositorService.sortedToplevels
                 : ToplevelManager.toplevels.values;
         
+        // Build map of running apps (apps with open windows)
+        const runningAppsMap = new Map();
         for (const toplevel of allToplevels) {
             if (!toplevel.appId) continue;
-            
-            // Fast check for exact matches before regex
             if (toplevel.appId === "" || toplevel.appId === "null") continue;
 
             if (ignoredRegexes.some(re => re.test(toplevel.appId))) {
@@ -83,51 +70,41 @@ Item {
             }
 
             const lowerAppId = toplevel.appId.toLowerCase();
-            if (!appMap.has(lowerAppId)) {
-                // Not pinned, create new entry for open app
-                appMap.set(lowerAppId, {
+            if (!runningAppsMap.has(lowerAppId)) {
+                runningAppsMap.set(lowerAppId, {
                     appId: toplevel.appId,
                     toplevels: [],
                     pinned: false
                 });
             }
-            // Add toplevel to the entry (whether pinned or not)
-            appMap.get(lowerAppId).toplevels.push(toplevel);
+            runningAppsMap.get(lowerAppId).toplevels.push(toplevel);
         }
 
         const values = [];
         let order = 0;
-        let hasPinned = false;
-        let hasUnpinned = false;
-
-        // 3) Build final list: pinned apps first
+        
+        // 1) Add ONLY pinned apps (without running windows) - left section
         for (const appId of pinnedApps) {
             const lowerAppId = appId.toLowerCase();
-            const entry = appMap.get(lowerAppId);
-            if (entry) {
+            // Only show pinned apps that don't have running windows
+            if (!runningAppsMap.has(lowerAppId)) {
                 values.push({
                     uniqueId: "app-" + lowerAppId,
                     appId: lowerAppId,
-                    toplevels: entry.toplevels,
+                    toplevels: [],
                     pinned: true,
-                    originalAppId: entry.appId,
+                    originalAppId: appId,
                     section: "pinned",
                     order: order++
                 });
-                hasPinned = true;
             }
         }
-
-        // 4) Check if there are unpinned open apps
-        for (const [lowerAppId, entry] of appMap) {
-            if (!entry.pinned) {
-                hasUnpinned = true;
-                break;
-            }
-        }
-
-        // 5) Separator only when there are both pinned and unpinned apps
-        if (hasPinned && hasUnpinned) {
+        
+        // 2) Add separator if there are both pinned-only apps and running apps
+        const hasPinnedOnly = values.length > 0;
+        const hasRunning = runningAppsMap.size > 0;
+        
+        if (hasPinnedOnly && hasRunning) {
             values.push({
                 uniqueId: "separator",
                 appId: "SEPARATOR",
@@ -138,20 +115,42 @@ Item {
                 order: order++
             });
         }
-
-        // 6) Open (unpinned) apps on the right
-        for (const [lowerAppId, entry] of appMap) {
-            if (!entry.pinned) {
-                values.push({
-                    uniqueId: "app-" + lowerAppId,
-                    appId: lowerAppId,
-                    toplevels: entry.toplevels,
-                    pinned: false,
-                    originalAppId: entry.appId,
-                    section: "open",
-                    order: order++
-                });
-            }
+        
+        // 3) Add running apps (right section) - includes pinned apps that are also running
+        const sortedRunningApps = [];
+        for (const [lowerAppId, entry] of runningAppsMap) {
+            sortedRunningApps.push({
+                lowerAppId: lowerAppId,
+                entry: entry
+            });
+        }
+        // Sort to keep consistency: pinned+running apps first (by pinned order), then unpinned
+        sortedRunningApps.sort((a, b) => {
+            const aIndex = pinnedApps.findIndex(p => p.toLowerCase() === a.lowerAppId);
+            const bIndex = pinnedApps.findIndex(p => p.toLowerCase() === b.lowerAppId);
+            
+            const aIsPinned = aIndex !== -1;
+            const bIsPinned = bIndex !== -1;
+            
+            // Pinned apps first (in their pinned order)
+            if (aIsPinned && bIsPinned) return aIndex - bIndex;
+            if (aIsPinned) return -1;
+            if (bIsPinned) return 1;
+            
+            // Unpinned apps maintain their order
+            return 0;
+        });
+        
+        for (const {lowerAppId, entry} of sortedRunningApps) {
+            values.push({
+                uniqueId: "app-" + lowerAppId,
+                appId: lowerAppId,
+                toplevels: entry.toplevels,
+                pinned: pinnedApps.some(p => p.toLowerCase() === lowerAppId),
+                originalAppId: entry.appId,
+                section: "running",
+                order: order++
+            });
         }
 
         dockItems = values
