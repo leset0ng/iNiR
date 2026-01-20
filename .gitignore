@@ -9,6 +9,8 @@
 .kiro/
 .opencode/
 .claude/
+.cursor/
+.windsurf/
 hooks/
 AGENTS.md
 **/AGENTS.md
@@ -17,6 +19,7 @@ CLAUDE.md
 prompts/
 .continue/
 context-architect/
+inir-docs/
 
 # WIP documentation (not for distribution)
 docs/*_IMPLEMENTATION.md
