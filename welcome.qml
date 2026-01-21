@@ -604,11 +604,28 @@ Scope {
             }
         }
 
-        // Wallpaper
+        // Wallpaper - Inline picker
         SettingsGroup {
             Layout.fillWidth: true
             Layout.maximumWidth: 560
             Layout.alignment: Qt.AlignHCenter
+
+            property var wallpapersList: []
+            property string wallpapersPath: `${FileUtils.trimFileProtocol(Directories.pictures)}/Wallpapers`
+
+            Component.onCompleted: wallpaperScanProc.running = true
+
+            Process {
+                id: wallpaperScanProc
+                command: ["/usr/bin/find", parent.wallpapersPath, "-maxdepth", "1", "-type", "f", "-iregex", ".*\\.(jpg|jpeg|png|webp|avif)$"]
+                stdout: SplitParser {
+                    splitMarker: ""
+                    onRead: data => {
+                        const lines = data.trim().split("\n").filter(l => l.length > 0)
+                        parent.parent.wallpapersList = lines
+                    }
+                }
+            }
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -618,32 +635,95 @@ Scope {
                     Layout.fillWidth: true
                     MaterialSymbol { text: "wallpaper"; iconSize: 20; color: Appearance.colors.colPrimary }
                     StyledText { text: Translation.tr("Wallpaper & Colors"); font.pixelSize: Appearance.font.pixelSize.normal }
+                    Item { Layout.fillWidth: true }
+                    StyledText {
+                        text: Translation.tr("Colors auto-generated")
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                    }
                 }
 
-                StyledText {
+                // Inline wallpaper grid
+                Rectangle {
                     Layout.fillWidth: true
-                    text: Translation.tr("Theme colors are automatically generated from your wallpaper using Material You")
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    wrapMode: Text.WordWrap
+                    implicitHeight: 110
+                    radius: Appearance.rounding.small
+                    color: Appearance.colors.colLayer2
+                    clip: true
+
+                    Flickable {
+                        id: wallpaperFlickable
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        contentWidth: wallpaperRow.width
+                        flickableDirection: Flickable.HorizontalFlick
+                        boundsBehavior: Flickable.StopAtBounds
+
+                        Row {
+                            id: wallpaperRow
+                            spacing: 8
+
+                            Repeater {
+                                model: parent.parent.parent.parent.wallpapersList
+
+                                Rectangle {
+                                    required property string modelData
+                                    width: 140
+                                    height: 90
+                                    radius: Appearance.rounding.small
+                                    color: Appearance.colors.colLayer3
+                                    border.width: Config.options?.background?.wallpaperPath === modelData ? 3 : 0
+                                    border.color: Appearance.colors.colPrimary
+
+                                    Image {
+                                        anchors.fill: parent
+                                        anchors.margins: 2
+                                        source: Qt.resolvedUrl(modelData)
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        sourceSize.width: 280
+                                        sourceSize.height: 180
+
+                                        layer.enabled: true
+                                        layer.effect: OpacityMask {
+                                            maskSource: Rectangle {
+                                                width: 136; height: 86
+                                                radius: Appearance.rounding.small - 2
+                                            }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            Config.setNestedValue("background.wallpaperPath", modelData)
+                                            MaterialThemeLoader.generateFromWallpaper(modelData)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
+                // Fallback button for custom selection
                 RippleButton {
                     Layout.fillWidth: true
-                    implicitHeight: 48
+                    implicitHeight: 36
                     buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.colors.colPrimaryContainer
-                    colBackgroundHover: Appearance.colors.colPrimaryContainerHover
+                    colBackground: Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
                     onClicked: Quickshell.execDetached([Directories.wallpaperSwitchScriptPath])
 
                     RowLayout {
                         anchors.centerIn: parent
-                        spacing: 10
-                        MaterialSymbol { text: "add_photo_alternate"; iconSize: 22; color: Appearance.colors.colOnPrimaryContainer }
+                        spacing: 8
+                        MaterialSymbol { text: "folder_open"; iconSize: 18; color: Appearance.colors.colOnLayer1 }
                         StyledText {
-                            text: Translation.tr("Choose Wallpaper")
-                            color: Appearance.colors.colOnPrimaryContainer
-                            font.pixelSize: Appearance.font.pixelSize.normal
+                            text: Translation.tr("Browse for more...")
+                            color: Appearance.colors.colOnLayer1
+                            font.pixelSize: Appearance.font.pixelSize.smaller
                         }
                     }
                 }
