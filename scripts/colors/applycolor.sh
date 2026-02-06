@@ -70,6 +70,7 @@ apply_terminal_configs() {
     local enable_wezterm=$(jq -r '.appearance.wallpaperTheming.terminals.wezterm // true' "$CONFIG_FILE")
     local enable_ghostty=$(jq -r '.appearance.wallpaperTheming.terminals.ghostty // true' "$CONFIG_FILE")
     local enable_konsole=$(jq -r '.appearance.wallpaperTheming.terminals.konsole // true' "$CONFIG_FILE")
+    local enable_starship=$(jq -r '.appearance.wallpaperTheming.terminals.starship // true' "$CONFIG_FILE")
 
     # Only add terminals that are both enabled AND installed
     [[ "$enable_kitty" == "true" ]] && command -v kitty &>/dev/null && enabled_terminals+=(kitty)
@@ -78,9 +79,10 @@ apply_terminal_configs() {
     [[ "$enable_wezterm" == "true" ]] && command -v wezterm &>/dev/null && enabled_terminals+=(wezterm)
     [[ "$enable_ghostty" == "true" ]] && command -v ghostty &>/dev/null && enabled_terminals+=(ghostty)
     [[ "$enable_konsole" == "true" ]] && command -v konsole &>/dev/null && enabled_terminals+=(konsole)
+    [[ "$enable_starship" == "true" ]] && command -v starship &>/dev/null && enabled_terminals+=(starship)
   else
-    # Default: only generate for installed terminals
-    for term in kitty alacritty foot wezterm ghostty konsole; do
+    # Default: only generate for installed terminals + starship
+    for term in kitty alacritty foot wezterm ghostty konsole starship; do
       command -v "$term" &>/dev/null && enabled_terminals+=("$term")
     done
   fi

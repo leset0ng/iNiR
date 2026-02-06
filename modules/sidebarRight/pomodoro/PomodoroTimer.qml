@@ -185,6 +185,17 @@ Item {
                 spacing: 6
                 visible: root.settingsOpen && !TimerService.pomodoroRunning
 
+                // Brief explanation of the Pomodoro technique
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Focus → Break → Focus → Break → ... → Long break")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    Layout.bottomMargin: 4
+                }
+
                 // Inline component: a single adjustable value row
                 component AdjustRow: RowLayout {
                     id: adjustRow
