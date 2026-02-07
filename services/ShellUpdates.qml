@@ -124,6 +124,9 @@ Singleton {
         running: false
         command: [
             "/usr/bin/bash", "-c",
+            // First check if config dir itself is a git repo (dev setup)
+            "if [[ -d \"" + root.configDir + "/.git\" ]]; then echo \"" + root.configDir + "\"; exit 0; fi; " +
+            // Then search common clone locations
             "for dir in ~/inir ~/iNiR ~/Downloads/inir ~/Downloads/iNiR ~/.local/src/inir ~/.local/src/iNiR /tmp/inir /tmp/iNiR; do " +
             "if [[ -d \"$dir/.git\" ]]; then echo \"$dir\"; exit 0; fi; done; " +
             "echo ''"
