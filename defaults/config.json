@@ -107,6 +107,7 @@
       "contrast": 0,
       "dim": 40,
       "enable": true,
+      "enableAnimatedBlur": false,
       "saturation": 0,
       "useMainWallpaper": true,
       "vignetteEnabled": false,

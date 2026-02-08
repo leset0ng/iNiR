@@ -413,6 +413,7 @@ Singleton {
                     property string wallpaperPath: ""
                     property string thumbnailPath: "" // Thumbnail for animated wallpapers (video/gif)
                     property bool enableAnimation: false // Enable animated wallpapers (video/gif) in backdrop (disabled by default for performance)
+                    property bool enableAnimatedBlur: false // Enable blur for animated wallpapers (video/gif) - has performance impact
                     property int blurRadius: 32
                     property int dim: 35 // 0-100
                     property real saturation: 1.0
@@ -1078,12 +1079,15 @@ Singleton {
                     property string wallpaperPath: "" // Empty = use main wallpaper
                     property string thumbnailPath: "" // Thumbnail for animated wallpapers (video/gif)
                     property bool useMainWallpaper: true
+                    property bool enableAnimation: true // Enable animated wallpapers (video/gif)
                     property JsonObject effects: JsonObject {
                         property bool enableBlur: false
                         property int blurRadius: 32
                         property int blurStatic: 0
                         property int dim: 0
                         property int dynamicDim: 0
+                        property bool enableAnimatedBlur: false // Enable blur for animated wallpapers (video/gif) - has performance impact
+                        property int thumbnailBlurStrength: 70 // Blur strength for animated wallpapers (0-100)
                     }
                     property JsonObject backdrop: JsonObject {
                         property bool enable: false
@@ -1092,6 +1096,7 @@ Singleton {
                         property string wallpaperPath: ""
                         property string thumbnailPath: "" // Thumbnail for animated wallpapers (video/gif)
                         property bool enableAnimation: false // Enable animated wallpapers (video/gif) in backdrop (disabled by default for performance)
+                        property bool enableAnimatedBlur: false // Enable blur for animated wallpapers (video/gif) - has performance impact
                         property int blurRadius: 32
                         property int dim: 35
                         property real saturation: 1.0
