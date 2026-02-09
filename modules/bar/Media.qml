@@ -32,10 +32,10 @@ Item {
 
     // Volume popup
     property bool volumePopupVisible: false
-    
+
     // Bar-anchored media popup
     property bool barMediaPopupVisible: false
-    
+
     Timer {
         id: hideTimer
         interval: 1000
@@ -101,7 +101,7 @@ Item {
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.layer: WlrLayer.Top
             WlrLayershell.namespace: "quickshell:mediaBackdrop"
-            
+
             MouseArea {
                 anchors.fill: parent
                 onClicked: root.barMediaPopupVisible = false
@@ -137,16 +137,16 @@ Item {
                 id: mediaPopupContent
                 anchors.centerIn: parent
                 onCloseRequested: root.barMediaPopupVisible = false
-                
+
                 // Entry animation
                 opacity: 0
                 scale: 0.9
                 transformOrigin: Config.options.bar.bottom ? Item.Bottom : Item.Top
-                
+
                 Component.onCompleted: {
                     entryAnim.start()
                 }
-                
+
                 ParallelAnimation {
                     id: entryAnim
                     NumberAnimation { target: mediaPopupContent; property: "opacity"; to: 1; duration: 200; easing.type: Easing.OutCubic }
@@ -190,21 +190,16 @@ Item {
         spacing: 4
         anchors.fill: parent
 
-        ClippedFilledCircularProgress {
+        StyledCircularProgressBar {
             id: mediaCircProg
-            Layout.alignment: Qt.AlignVCenter
-            lineWidth: Appearance.rounding.unsharpen
             value: (activePlayer && activePlayer.length > 0) ? (activePlayer.position / activePlayer.length) : 0
-            implicitSize: 22
-            colPrimary: Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                : Appearance.colors.colOnSecondaryContainer
-            enableAnimation: activePlayer?.playbackState === MprisPlaybackState.Playing
+            indicatorSize: 22
+            wavy: activePlayer?.playbackState === MprisPlaybackState.Playing
 
             Item {
                 anchors.centerIn: parent
-                width: mediaCircProg.implicitSize
-                height: mediaCircProg.implicitSize
+                width: mediaCircProg.indicatorSize
+                height: mediaCircProg.indicatorSize
 
                 MaterialSymbol {
                     anchors.centerIn: parent

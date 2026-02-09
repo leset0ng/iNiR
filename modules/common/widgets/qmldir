@@ -119,3 +119,5 @@ WindowDialogSeparator 1.0 WindowDialogSeparator.qml
 WindowDialogSlider 1.0 WindowDialogSlider.qml
 WindowDialogTitle 1.0 WindowDialogTitle.qml
 WallpaperCrossfader 1.0 WallpaperCrossfader.qml
+StyledCircularProgressBar 1.0 StyledCircularProgressBar.qml
+WavyCircular 1.0 WavyCircular.qml

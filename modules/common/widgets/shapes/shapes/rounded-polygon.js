@@ -321,7 +321,11 @@ class RoundedPolygon {
         // If no per-vertex rounding supplied and caller asked for inner rounding,
         // create per-vertex rounding list based on supplied outer/inner rounding parameters
         if (pvRounding == null && innerRounding != null) {
-            pvRounding = Array.from({ length: numVerticesPerRadius * 2 }).flatMap(() => [rounding, innerRounding])
+            pvRounding = []
+            for (let i = 0; i < numVerticesPerRadius * 2; i++) {
+                pvRounding.push(rounding)
+                pvRounding.push(innerRounding)
+            }
         }
 
         return RoundedPolygon.fromVertices(RoundedPolygon.starVerticesFromNumVerts(numVerticesPerRadius, radius, innerRadius, centerX, centerY), rounding, perVertexRounding, centerX, centerY)
