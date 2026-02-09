@@ -12,7 +12,7 @@
 <p align="center">
   <a href="docs/INSTALL.md">Installation</a> •
   <a href="docs/KEYBINDS.md">Keybinds</a> •
-  <a href="docs/IPC.md">IPC Reference</a> •
+  <a href="docs/IPC.md">IPC Reference</a>
 </p>
 
 ---
