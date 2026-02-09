@@ -2,12 +2,12 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.services
-import qs.modules.ii.sidebarRight.calendar
-import qs.modules.ii.sidebarRight.todo
-import qs.modules.ii.sidebarRight.pomodoro
-import qs.modules.ii.sidebarRight.notepad
-import qs.modules.ii.sidebarRight.calculator
-import qs.modules.ii.sidebarRight.sysmon
+import qs.modules.sidebarRight.calendar
+import qs.modules.sidebarRight.todo
+import qs.modules.sidebarRight.pomodoro
+import qs.modules.sidebarRight.notepad
+import qs.modules.sidebarRight.calculator
+import qs.modules.sidebarRight.sysmon
 import QtQuick
 import QtQuick.Layouts
 // import Qt5Compat.GraphicalEffects // Might not be available, using standard Rectangle gradient instead

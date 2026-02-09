@@ -6,7 +6,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Bluetooth
 
-import qs.modules.ii.sidebarRight.quickToggles.androidStyle
+import qs.modules.sidebarRight.quickToggles.androidStyle
 
 AbstractQuickPanel {
     id: root

@@ -13,13 +13,13 @@ import Quickshell.Hyprland
 import QtQuick.Effects
 import Qt5Compat.GraphicalEffects as GE
 
-import qs.modules.ii.sidebarRight.quickToggles
-import qs.modules.ii.sidebarRight.quickToggles.classicStyle
+import qs.modules.sidebarRight.quickToggles
+import qs.modules.sidebarRight.quickToggles.classicStyle
 
-import qs.modules.ii.sidebarRight.bluetoothDevices
-import qs.modules.ii.sidebarRight.nightLight
-import qs.modules.ii.sidebarRight.volumeMixer
-import qs.modules.ii.sidebarRight.wifiNetworks
+import qs.modules.sidebarRight.bluetoothDevices
+import qs.modules.sidebarRight.nightLight
+import qs.modules.sidebarRight.volumeMixer
+import qs.modules.sidebarRight.wifiNetworks
 
 Item {
     id: root
