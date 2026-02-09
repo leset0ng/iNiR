@@ -5,6 +5,14 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.2] - 2026-02-09
+
+### Added
+- **Dock screen filtering**: `screenList` config option for per-monitor dock control, matching bar behavior (thanks @ainia for the reminder)
+
+### Fixed
+- **Dock animations**: Resolved flickering during app launch and drag operations (PR #40 by @Legnatbird)
+
 ## [2.8.1] - 2026-02-08
 
 ### Added
