@@ -6,18 +6,17 @@
   🌐 <b>Languages:</b> <a href="README.md">English</a> | <a href="README.es.md">Español</a> | <a href="README.ru.md">Русский</a>
 </p>
 
-<h1 align="center">iNiR</h1>
+<h1 align="center">LST-II</h1>
 
 <p align="center">
   <b>A feature-rich Quickshell configuration for the Niri compositor</b><br>
-  <sub>Fork of end-4's illogical-impulse, reimagined for Niri</sub>
+  <sub>Fork of snowarch/iNiR,modifyed by lesetong</sub>
 </p>
 
 <p align="center">
   <a href="docs/INSTALL.md">Installation</a> •
   <a href="docs/KEYBINDS.md">Keybinds</a> •
   <a href="docs/IPC.md">IPC Reference</a> •
-  <a href="https://discord.gg/pAPTfAhZUJ">Discord</a>
 </p>
 
 ---
@@ -125,6 +124,7 @@ qs kill -c ii && qs -c ii       # Restart shell
 
 ## Credits
 
+- [**iNiR**](https://github.com/snowarch/iNiR) — Original iNiR
 - [**end-4**](https://github.com/end-4/dots-hyprland) — Original illogical-impulse for Hyprland
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — The framework powering this shell
 - [**Niri**](https://github.com/YaLTeR/niri) — The scrolling tiling Wayland compositor
