@@ -18,6 +18,7 @@ Item {
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
     readonly property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || Translation.tr("No media")
     readonly property string popupMode: Config.options?.media?.popupMode ?? "dock"
+    property list<real> visualizerPoints: []
 
     Layout.fillHeight: true
     implicitWidth: rowLayout.implicitWidth + rowLayout.spacing * 2
@@ -109,6 +110,23 @@ Item {
         }
     }
 
+    Process {
+        id: cavaProc
+        running: barMediaPopupLoader.active
+        onRunningChanged: {
+            if (!cavaProc.running) {
+                root.visualizerPoints = [];
+            }
+        }
+        command: ["cava", "-p", `${FileUtils.trimFileProtocol(Directories.scriptPath)}/cava/raw_output_config.txt`]
+        stdout: SplitParser {
+            onRead: data => {
+                // Parse `;`-separated values into the visualizerPoints array
+                let points = data.split(";").map(p => parseFloat(p.trim())).filter(p => !isNaN(p));
+                root.visualizerPoints = points;
+            }
+        }
+    }
     // Bar-anchored media controls popup (when popupMode === "bar")
     Loader {
         id: barMediaPopupLoader
@@ -123,7 +141,7 @@ Item {
                 edges: !Config.options.bar.bottom ? Edges.Top : Edges.Bottom
                 gravity: Config.options.bar.bottom ? Edges.Top : Edges.Bottom
             }
-            implicitWidth: mediaPopupContent.width + root.width
+            implicitWidth: mediaPopupContent.width
             implicitHeight: mediaPopupContent.height + root.height
 
             // Click outside to close
@@ -144,12 +162,14 @@ Item {
                 y: Config.options.bar.bottom ? root.height : 0
                 transform:Scale{
                     id: scaleTransform
-                    origin.x:width / 2
+                    origin.x:mediaPopupContent.width / 2.0
                     origin.y:Config.options.bar.bottom ? height : 0
                     xScale:rowLayout.width / mediaPopupContent.width
                     yScale:rowLayout.width / mediaPopupContent.width
                 }
                 transformOrigin: Config.options.bar.bottom ? Item.Bottom : Item.Top
+
+                visualizerPoints : root.visualizerPoints
 
                 Component.onCompleted: {
                     entryAnim.start()
@@ -157,10 +177,10 @@ Item {
 
                 ParallelAnimation {
                     id: entryAnim
-                    NumberAnimation { target: mediaPopupContent; property: "opacity"; to: 1; duration: 300; easing.type: Easing.OutCubic }
-                    NumberAnimation { target: scaleTransform; property: "yScale"; to: 1; duration: 300; easing.type: Easing.OutCubic }
-                    NumberAnimation { target: scaleTransform; property: "xScale"; to: 1; duration: 350; easing.type: Easing.OutCubic }
-                    PropertyAnimation{ target: mediaPopupContent; property: "y"; to: Config.options.bar.bottom ? 0 : root.height; duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.1 }
+                    NumberAnimation { target: mediaPopupContent; property: "opacity"; to: 1; duration: 200; easing.type: Easing.OutCubic }
+                    NumberAnimation { target: scaleTransform; property: "yScale"; to: 1; duration: 250; easing.type: Easing.InOutCubic }
+                    NumberAnimation { target: scaleTransform; property: "xScale"; to: 1; duration: 250; easing.type: Easing.InOutCubic }
+                    PropertyAnimation{ target: mediaPopupContent; property: "y"; to: Config.options.bar.bottom ? 0 : root.height; duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.1 }
                 }
             }
         }

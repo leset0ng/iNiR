@@ -50,24 +50,6 @@ Item {
         }
     }
 
-    Process {
-        id: cavaProc
-        running: mediaControlsLoader.active
-        onRunningChanged: {
-            if (!cavaProc.running) {
-                root.visualizerPoints = [];
-            }
-        }
-        command: ["cava", "-p", `${FileUtils.trimFileProtocol(Directories.scriptPath)}/cava/raw_output_config.txt`]
-        stdout: SplitParser {
-            onRead: data => {
-                // Parse `;`-separated values into the visualizerPoints array
-                let points = data.split(";").map(p => parseFloat(p.trim())).filter(p => !isNaN(p));
-                root.visualizerPoints = points;
-            }
-        }
-    }
-
     implicitWidth: widgetWidth
     implicitHeight: playerColumn.implicitHeight
 
@@ -94,7 +76,7 @@ Item {
                     anchors.fill: parent
                     anchors.margins: 0
                     player: modelData
-                    visualizerPoints: root.visualizerPoints
+                    visualizerPoints: isActive ? root.visualizerPoints : []
                     radius: root.popupRounding
                     selected: isActive && (root._cacheValid ? root._playerCache : (root.meaningfulPlayers ?? [])).length > 1
                 }
