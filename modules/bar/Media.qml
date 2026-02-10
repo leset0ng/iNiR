@@ -120,11 +120,11 @@ Item {
             anchor {
                 window: root.QsWindow.window
                 item: root
-                edges: Config.options.bar.bottom ? Edges.Top : Edges.Bottom
+                edges: !Config.options.bar.bottom ? Edges.Top : Edges.Bottom
                 gravity: Config.options.bar.bottom ? Edges.Top : Edges.Bottom
             }
-            implicitWidth: mediaPopupContent.width + Appearance.sizes.elevationMargin * 2
-            implicitHeight: mediaPopupContent.height + Appearance.sizes.elevationMargin * 2
+            implicitWidth: mediaPopupContent.width + root.width
+            implicitHeight: mediaPopupContent.height + root.height
 
             // Click outside to close
             MouseArea {
@@ -135,12 +135,20 @@ Item {
 
             BarMediaPopup {
                 id: mediaPopupContent
-                anchors.centerIn: parent
+                anchors.horizontalCenter: parent.horizontalCenter  // 只水平居中
+                anchors.verticalCenter: undefined
                 onCloseRequested: root.barMediaPopupVisible = false
 
                 // Entry animation
                 opacity: 0
-                scale: 0.9
+                y: Config.options.bar.bottom ? root.height : 0
+                transform:Scale{
+                    id: scaleTransform
+                    origin.x:width / 2
+                    origin.y:Config.options.bar.bottom ? height : 0
+                    xScale:rowLayout.width / mediaPopupContent.width
+                    yScale:rowLayout.width / mediaPopupContent.width
+                }
                 transformOrigin: Config.options.bar.bottom ? Item.Bottom : Item.Top
 
                 Component.onCompleted: {
@@ -149,8 +157,10 @@ Item {
 
                 ParallelAnimation {
                     id: entryAnim
-                    NumberAnimation { target: mediaPopupContent; property: "opacity"; to: 1; duration: 200; easing.type: Easing.OutCubic }
-                    NumberAnimation { target: mediaPopupContent; property: "scale"; to: 1; duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+                    NumberAnimation { target: mediaPopupContent; property: "opacity"; to: 1; duration: 300; easing.type: Easing.OutCubic }
+                    NumberAnimation { target: scaleTransform; property: "yScale"; to: 1; duration: 300; easing.type: Easing.OutCubic }
+                    NumberAnimation { target: scaleTransform; property: "xScale"; to: 1; duration: 350; easing.type: Easing.OutCubic }
+                    PropertyAnimation{ target: mediaPopupContent; property: "y"; to: Config.options.bar.bottom ? 0 : root.height; duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.1 }
                 }
             }
         }
